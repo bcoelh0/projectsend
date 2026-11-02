@@ -4,6 +4,14 @@ services:
   app:
     image: projectsend/projectsend:2
     restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "$ADMIN_EMAIL" ] || [ -z "$ADMIN_PASSWORD" ]; then
+          echo "Administrator email and password must be configured" >&2
+          exit 1
+        fi
+        exec projectsend-entrypoint supervisord -c /etc/supervisord.conf
     environment:
       SERVICE_URL_APP_80: /
       APP_URL: ${APP_URL:?Set the public HTTPS URL}
@@ -21,8 +29,8 @@ services:
       QUEUE_CONNECTION: redis
       TRUSTED_PROXIES: "*"
       ADMIN_NAME: Administrator
-      ADMIN_EMAIL: ${ADMIN_EMAIL:?Set the administrator email before deployment}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set the administrator password before deployment}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     volumes:
       - storage:/var/www/html/storage
     depends_on:
